@@ -1,25 +1,95 @@
 module Payload {
+
+    enum ImgResolution { SIZE_640x480 = 0 , SIZE_800x600 = 1 }
+
     @ Raspberry Pi Camera Component
-    passive component Camera {
+    active component Camera {
 
-        ##############################################################################
-        #### Uncomment the following examples to start customizing your component ####
-        ##############################################################################
+        @ Capture image and save the raw data
+        async command CaptureImage()
 
-        # @ Example async command
-        # async command COMMAND_NAME(param_name: U32)
+        # ----------------------------------------------------------------------
+        # General ports
+        # ----------------------------------------------------------------------
 
-        # @ Example telemetry counter
-        # telemetry ExampleCounter: U64
+        @ Allocates memory to hold photo buffers
+        output port allocate: Fw.BufferGet
 
-        # @ Example event
-        # event ExampleStateEvent(example_state: Fw.On) severity activity high id 0 format "State set to {}"
+        @ Deallocates memory that holds photo buffers
+        output port deallocate: Fw.BufferSend
 
-        # @ Example port: receiving calls from the rate group
-        # sync input port run: Svc.Sched
+        @ Save photo to disk, send image to buffer logger
+        output port $save: Fw.BufferSend
 
-        # @ Example parameter
-        # param PARAMETER_NAME: U32
+        # -----------------------------------------------------------------------------
+        # Events
+        # -----------------------------------------------------------------------------
+
+        @ Event where no camera was detected
+        event CameraNotDetected \
+            severity warning high \
+            format "No cameras were detected" \
+
+        @ Event where error occurred when setting up camera
+        event CameraOpenError \
+            severity warning high \
+            format "Camera failed to open" \
+
+        @ Event where Camera successfully opened
+        event CameraOpenSuccess \
+            severity activity high \
+            format "Camera opened!" \
+
+        @ Event image configuration has been set
+        event SetImgConfig(
+            resolution: ImgResolution @< Image size
+        ) \
+            severity activity high \
+            format "The image resolution has been set to {}" \
+
+        @ Failed to set size and color format
+        event ImgConfigSetFail(
+            resolution: ImgResolution @< Image size
+        ) \
+            severity warning high \
+            format "Image resolution of {} failed to set" \
+
+        @ Camera failed to capture image
+        event CameraCaptureFail \
+            severity warning high \
+            format "Camera failed to capture image"
+
+        @ Camera successfully saved image
+        event CameraSave \
+            severity activity low \
+            format "Image was saved"
+
+        @ Blank frame Error
+        event BlankFrame \
+            severity warning high \
+            format "Error: Blank frame was grabbed" \
+
+        @ Invalid buffer size error
+        event InvalidBufferSizeError(
+            imgBufferSize: U32  @< size of imgBuffer to hold image data
+            imgSize: U32        @< size of image
+        ) \
+            severity warning high \
+            format "imgBuffer of size {} is less than imgSize of size {}"
+
+        # ----------------------------------------------------------------------
+        # Telemetry
+        # ----------------------------------------------------------------------
+
+        @ Total number of files captured
+        telemetry photosTaken: U32 id 0 update on change
+
+        # ----------------------------------------------------------------------
+        # Parameters
+        # ----------------------------------------------------------------------
+        
+        @ Image resolution that the camera should be configured for
+        param IMG_RESOLUTION: ImgResolution
 
         ###############################################################################
         # Standard AC Ports: Required for Channels, Events, Commands, and Parameters  #
@@ -44,6 +114,12 @@ module Payload {
 
         @ Port for sending telemetry channels to downlink
         telemetry port tlmOut
+
+        @ Port to return the value of a parameter
+        param get port prmGetOut
+
+        @Port to set the value of a parameter
+        param set port prmSetOut
 
     }
 }
