@@ -37,25 +37,25 @@ namespace Payload {
 
   bool Camera::open(I32 deviceIndex)
   {
-  if(camManager->start() < 0) {
+    if(camManager->start() < 0) {
+      this->log_WARNING_HI_CameraOpenError();
+      return false;
+    }
+
+    if(camManager->cameras().empty()) {
+      this->log_WARNING_HI_CameraNotDetected();
+      return false;
+    }
+
+    cam = camManager->cameras()[deviceIndex];
+    I32 ret = cam->acquire();
+    if(ret == 0 || ret == EBUSY) {
+      this->log_ACTIVITY_HI_CameraOpenSuccess();
+      return true;
+    }
+
     this->log_WARNING_HI_CameraOpenError();
     return false;
-  }
-
-  if(camManager->cameras().empty()) {
-    this->log_WARNING_HI_CameraNotDetected();
-    return false;
-  }
-
-  cam = camManager->cameras()[deviceIndex];
-  I32 ret = cam->acquire();
-  if(ret == 0 || ret == EBUSY) {
-    this->log_ACTIVITY_HI_CameraOpenSuccess();
-    return true;
-  }
-
-  this->log_WARNING_HI_CameraOpenError();
-  return false;
   }
 
   void Camera ::parameterUpdated(FwPrmIdType id) {
@@ -90,7 +90,7 @@ namespace Payload {
         buffer_size += plane.length;
         if (i == buffer->planes().size() - 1 || plane.fd.get() != buffer->planes()[i + 1].fd.get()) {
           void *memory = mmap(NULL, buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, plane.fd.get(), 0);
-          mappedBuffers[buffer.get()].push_back(libcamera::Span<uint8_t>(static_cast<uint8_t *>(memory), buffer_size));
+          mappedBuffers[buffer.get()].push_back(libcamera::Span<U8>(static_cast<U8 *>(memory), buffer_size));
           buffer_size = 0;
         }
       }

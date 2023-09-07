@@ -22,7 +22,7 @@ export RPI_TOOLS=<path to installation directory of ARM cross compiler>
 export PATH=$RPI_TOOLS:$PATH
 
 cd lib/raspberrypi/libcamera
-meson setup build -Dprefix=<path-to-fprime-artemis-cubesat>/lib/raspberrypi/libcamera/build/ -Dpipelines=rpi/vc4 -Dipas=rpi/vc4 --cross-file ../libcamera-aarch32.txt
+meson setup build --wipe -Dprefix=<path-to-fprime-artemis-cubesat>/lib/raspberrypi/libcamera/build/ -Dpipelines=rpi/vc4 -Dipas=rpi/vc4 --cross-file ../libcamera-pi0-x86.txt
 cd build
 ninja
 ninja install
